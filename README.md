@@ -22,3 +22,4 @@ Here is how the code works -
 10. Calcualte time between clicks for all those arrays where the size of arrays of click up and click down match. If time between clicks < threshold value, then classify it as a double click. 
 11. Scroll length - add up all the scroll data stored and divide by 120 (distance between one notch to another is 120).
 12. Display all the data.
+13. Write the data into txt files so that they can be analyzed later on.
