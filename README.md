@@ -6,6 +6,7 @@ Takes the data from mouselogger V2 and extracts different features such as
 4. Average click duration 
 5. Average drag duration
 6. Scroll length/time
+7. Identify number of double clicks
 
 Here is how the code works -
 
@@ -18,6 +19,6 @@ Here is how the code works -
 7. Store click co-ordinates.
 8. Check drag length between every two clicks using distance function. If distance > (threshold value), classify those clicks as drag and remove these from the click list. The threshold value is set to 100 for now.
 9. Number of clicks = Total number of clicks initially identified - Number of drags
-10. Calcualte time between clicks for all those arrays where the size of arrays of click up and click down match.
+10. Calcualte time between clicks for all those arrays where the size of arrays of click up and click down match. If time between clicks < threshold value, then classify it as a double click. 
 11. Scroll length - add up all the scroll data stored and divide by 120 (distance between one notch to another is 120).
 12. Display all the data.
