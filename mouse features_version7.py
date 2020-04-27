@@ -23,7 +23,7 @@ plt.close('all') # close all previous plots
 #------------------------------------------------------------------------------
 
 #Input file name
-filename = "Feb1_2.txt"#str(input("Enter file name : "))
+filename = "Apr 14_2.log"#str(input("Enter file name : "))
 #The time stamp of when it was last modified
 lastmod = datetime.fromtimestamp(os.stat(filename).st_mtime)
 print("The file ",filename,"  was last edited at : ",lastmod)
@@ -47,10 +47,6 @@ print("Total time : ", totaltime/3600, "hours")
 start_time = lastmod + timedelta(seconds=-totaltime)
 print("The file started logging at : ", str(start_time))
 
-#making these arrays into np.arrays is necessary for animating
-#x = np.array(x)
-#y = np.array(y)
-
 #Labeling with "th" to indicate hourly paritions
 columns = 1
 rows = 24 #hours
@@ -59,6 +55,7 @@ xth = [[]*columns for i in range(rows)]
 yth = [[]*columns for i in range(rows)]
 click_stateth = [[]*columns for i in range(rows)]
 scroll_stateth = [[]*columns for i in range(rows)]
+
 #Initialize arrays for stroing the x after hourly partioning
 for i in range(0,len(time_stamp)):
     t = int(datetime.fromtimestamp(time_stamp[i]).hour) #temporary variable to store the hour
@@ -70,12 +67,7 @@ for i in range(0,len(time_stamp)):
   
 if(str(date.fromtimestamp(min(time_stamp))) != str(date.fromtimestamp(max(time_stamp)))):
     print("There are different dates here ranging from = ", str(date.fromtimestamp(min(time_stamp))), " to ",str(date.fromtimestamp(max(time_stamp))))
-    print("We consider only data on the day which the file started logging")
-'''
-for i in range(0,24):
-    for j in range(0,len(timeth[i])):
-       if(
-'''       
+       
 #------------------------------------------------------------------------------
 #Start analyzing
 #define distance function
@@ -96,13 +88,16 @@ rclick_down_posth = [[]*columns for i in range(rows)] #stores the position in th
 rclick_up_posth = [[]*columns for i in range(rows)] #stores the position in the array when the right button mouse is released
 
 for i in range(0,24):
+    flag = 0 #variable to check if 1 follows 2 in click states
     for j in range(0,len(timeth[i])):
         if(click_stateth[i][j] == 1 or click_stateth[i][j] == '0001'):
             click_down_posth[i].append(j)
-            t_downth[i].append(j)
-        elif(click_stateth[i][j] == 2 or click_stateth[i][j] == '0002'):    
+            t_downth[i].append(timeth[i][j])
+            flag = 1
+        elif((click_stateth[i][j] == 2 or click_stateth[i][j] == '0002') and flag==1):    
             click_up_posth[i].append(j)
-            t_upth[i].append(j)
+            t_upth[i].append(timeth[i][j])
+            flag = 0
         elif(click_stateth[i][j] == 4 or click_stateth[i][j] == '0004'):    
             rclick_down_posth[i].append(j)
         elif(click_stateth[i][j] == 8 or click_stateth[i][j] == '0008'):    
@@ -111,9 +106,20 @@ for i in range(0,24):
 for i in range(0,24):
     if(len(click_up_posth[i]) != len(click_down_posth[i])):
         print("Lengths of click up and click down don't match at ",i)
+    if(len(click_up_posth[i]) < len(click_down_posth[i]) and i != 15): # this means it's most likely at the hour change
+        click_up_posth[i].append(click_up_posth[i+1][0])
+        t_upth[i].append(t_upth[i+1][0])
+        print("Lengths now match at ",i)
+        
+
+#Using map() and lambda 
+def listOfTuples(l1, l2): 
+	return list(map(lambda x, y:(x,y), l1, l2)) 
+
+
 
 #------------------------------------------------------------------------------
-#Parameter 2 - click coordinates and no.of times clicked
+#Parameter 2 - click coordinates 
 
 x_click_downth = [[]*columns for i in range(rows)]
 y_click_downth = [[]*columns for i in range(rows)]
@@ -137,7 +143,7 @@ for i in range(0,24):
     for j in rclick_up_posth[i]:
         x_click_upth[i].append(float(xth[i][j]))
         y_click_upth[i].append(float(yth[i][j]))
-#print(distance(x_click_downth[23][10],y_click_downth[23][10],x_click_upth[23][10],y_click_upth[23][10]))                   
+                   
 #------------------------------------------------------------------------------
 #Parameter 3 - length of drag
 #take all distances here    
@@ -147,9 +153,7 @@ drag_lengthth = [[]*columns for i in range(rows)]
 for i in range(0,24):
     for j in range(0,len(click_down_posth[i])):
         drag_lengthth[i].append(distance(x_click_downth[i][j],y_click_downth[i][j],x_click_upth[i][j],y_click_upth[i][j]))
-    #print(len(drag_lengthth[i]),len(click_))
-        #print(distance(x_click_downth[i][j],y_click_downth[i][j],x_click_upth[i][j],y_click_upth[i][j]))   
-#print(drag_lengthth[23][200])
+        
 #------------------------------------------------------------------------------
 #Parameter 4 - identifying drag and no.of clicks
 
@@ -168,57 +172,94 @@ for i in range(0,24):
             t_dragth[i].append(float(t_upth[i][j]-t_downth[i][j]))
             t_up_tbrmvdth[i].append(t_upth[i][j])
             t_down_tbrmvdth[i].append(t_downth[i][j])
-            #print("hello")
-    #print(len(t_dragth[i]))    
-#Decide how to print no.of drag events
+            
 
 for i in range(0,24):
-    click_up_posth[i] = list(set(click_up_posth[i])-set(click_up_pos_tbrmvdth[i]))
-    click_down_posth[i] = list(set(click_down_posth[i])-set(click_down_pos_tbrmvdth[i]))
-    t_upth[i] = list(set(t_upth[i])-set(t_up_tbrmvdth[i]))
-    t_downth[i] = list(set(t_downth[i])-set(t_down_tbrmvdth[i]))
-
-#Decide how to print no.of clicks
+    click_up_posth[i] = [ j for j in click_up_posth[i] if j not in click_up_pos_tbrmvdth[i]]
+    click_down_posth[i] = [ j for j in click_down_posth[i] if j not in click_down_pos_tbrmvdth[i]]
+    t_upth[i] = [j for j in t_upth[i] if j not in t_up_tbrmvdth[i]]
+    t_downth[i] = [j for j in t_downth[i] if j not in t_down_tbrmvdth[i]]
 
 #------------------------------------------------------------------------------
-#Parameter 5 - time betweem clicks
+#Parameter 5 - time betweem clicks, number of double clicks, and time between double clicks
 
 t_btw_clicksth = [[]*columns for i in range(rows)]
-
+double_clicks = [[]*columns for i in range(rows)] #counts no.of double clicks in each hour
+t_btw_clicks_tbrmd = [[]*columns for i in range(rows)] #remove double clicks
 for i in range(0,24):
     for j in range(0,len(click_down_posth[i])-1):
         t_btw_clicksth[i].append(abs(t_downth[i][j+1]-t_downth[i][j]))
+            
+for i in range(0,24):
+    for j in range(0,len(click_down_posth[i])-1,2):
+        if(abs(t_downth[i][j+1]-t_downth[i][j])<0.65 or abs(t_downth[i][j+1]-t_downth[i][j])==0.65 ): #if the time between clicks is less than 0.65 second count as a double click
+            double_clicks[i].append(t_downth[i][j])
+            t_btw_clicks_tbrmd[i].append(abs(t_downth[i][j+1]-t_downth[i][j]))
+        
+for i in range(24):
+    t_btw_clicksth[i] = [j for j in t_btw_clicksth[i] if j not in t_btw_clicks_tbrmd[i]]
 
-        
-#Decide how to print time between clicks        
-        
+
 #------------------------------------------------------------------------------
 #Parameter 6 - click duration - defined as time between click up and release
 
-click_durationth = [[]*columns for i in range(rows)]
+click_durationth = []
 
 for i in range(0,24):
     try:
-        click_durationth[i] = np.array(t_upth[i])-np.array(t_downth[i])
+        click_durationth.append(np.array(t_upth[i])-np.array(t_downth[i]))
     except:
-        click_durationth[i] = 0
+        click_durationth.append([0]*columns)
         continue
+
 #------------------------------------------------------------------------------
 #Parameter 7 - no.of right clicks
 
-#Decide how to print rclick_up_posth
+#Check section on displaying data
 
 #------------------------------------------------------------------------------
 #Parameter 8 - scroll time/scroll length
 #One notch to another is 120
-'''
-scroll_sum = [[0]*24]
-for i in range(0,24):
+
+scroll_sum = [[]*columns for i in range(rows)]
+for i in range(24):
     for j in range(0,len(scroll_stateth[i])):
-        scroll_sum[i] = scroll_sum[i] + int(scroll_stateth[i][j])  
+        scroll_sum[i].append(scroll_stateth[i][j])
     
-    #scroll_sum[i] = (1/120)*scroll_sum[i]
-'''
+    scroll_sum[i] = (1/120)*scroll_sum[i]
+
+
+#------------------------------------------------------------------------------
+#Parameter 9 - statistics for drag time
+
+avg_t_dragth = []
+std_t_dragth = []
+avg_t_btw_clicksth = []
+std_t_btw_clicksth = []
+avg_click_durationth = []
+std_click_durationth = []
+for i in range(0,24):
+    if(len(t_dragth[i]) == 0):
+        avg_t_dragth.append(0)
+        std_t_dragth.append(0)
+    else:
+        avg_t_dragth.append(np.mean(t_dragth[i]))
+        std_t_dragth.append(np.std(t_dragth[i]))
+    if(len(t_btw_clicksth[i]) ==0):
+        avg_t_btw_clicksth.append(0)
+        std_t_btw_clicksth.append(0)
+    else:
+        avg_t_btw_clicksth.append(np.mean(t_btw_clicksth[i]))
+        std_t_btw_clicksth.append(np.std(t_btw_clicksth[i]))
+    if(len(click_durationth[i]) == 0):
+        avg_click_durationth.append(0)
+        std_click_durationth.append(0)
+    else:
+        avg_click_durationth.append(np.mean(click_durationth[i]))
+        std_click_durationth.append(np.std(click_durationth[i]))
+        
+x = range(0,24)
+
 #------------------------------------------------------------------------------
 #Displaying data
 
@@ -226,25 +267,67 @@ yc = []
 yd = []
 x = []
 yrc = []
-
+ydc = [] #double clicks
 for i in range(0,24):
     yc.append(len(click_up_posth[i]))
     x.append(i)
     yd.append(len(t_dragth[i]))
     yrc.append(len(rclick_up_posth[i]))
-plt.scatter(x,yc,c='r',marker='^',s = 70)
-plt.plot(x,yc,c='r',label="Left click")
-plt.scatter(x,yd,c='g',marker='^',s=70)
-plt.plot(x,yd,c='g',label="Drag")
-plt.scatter(x,yrc,c='y',marker='^',s=70)
-plt.plot(x,yrc,c='y',label="Right click")
-#plt.plot([start_time.hour,start_time.hour],[0,max(yc)],'k-')
-plt.axvline(x=start_time.hour,color='k',linestyle='-')
-plt.xlim(-0.5,24)
+    ydc.append(len(double_clicks[i]))
+
+plt.scatter(x,yc)
+plt.plot(x,yc)
 plt.xlabel("Time of the day")
-plt.ylabel("No.of events")
-plt.legend(loc="best")
-plt.title("Hourly mouse events")
+plt.ylabel("Average value in seconds")
 plt.grid()
-plt.show()    
+plt.xlim(-0.5,24)
+plt.legend()
+plt.show()
+
+#------------------------------------------------------------------------------
+#Writing data into a file
+
+mouse_events_file = "Mouse events.txt"
+tdrag_file = "Drag time.txt"
+t_btw_clicks_file = "Time btw clicks.txt"
+click_dur_file = "Click duration.txt"
+
+
+# The 'a' flag tells Python to keep the file contents
+# and append (add line) at the end of the file.
+myfile1 = open(mouse_events_file, 'a')
+# Add the line
+myfile1.write('Left clicks. The file started logging at: '+ str(start_time)+'\n')
+myfile1.write(str(x)+'\n')
+myfile1.write(str(yc)+'\n')
+myfile1.write(str(yd)+'\n')
+myfile1.write(str(yrc)+'\n')
+myfile1.write(str(ydc)+'\n')
+# Close the file
+myfile1.close()
+
+
+myfile2 = open(tdrag_file, 'a')
+# Add the line
+myfile2.write('Drag times. The file started logging at: '+ str(start_time)+'\n')
+myfile2.write(str(x)+'\n')
+myfile2.write(str(t_dragth)+'\n')
+# Close the file
+myfile2.close()
+
+myfile3 = open(t_btw_clicks_file, 'a')
+# Add the line
+myfile3.write('Time between clicks. The file started logging at: '+ str(start_time)+'\n')
+myfile3.write(str(x)+'\n')
+myfile3.write(str(t_btw_clicksth)+'\n')
+# Close the file
+myfile3.close()
+
+myfile4 = open(click_dur_file, 'a')
+# Add the line
+myfile4.write('Click duration. The file started logging at: '+ str(start_time)+'\n')
+myfile4.write(str(x)+'\n')
+myfile4.write(str(click_durationth)+'\n')
+# Close the file
+myfile4.close()
 
